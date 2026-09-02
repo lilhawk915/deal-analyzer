@@ -20,7 +20,7 @@
     details{border-top:1px solid var(--line)}summary{cursor:pointer;padding:14px 17px;font-weight:750;list-style:none}summary::-webkit-details-marker{display:none}summary:after{content:"+";float:right;color:var(--muted)}details[open] summary:after{content:"–"}.note{font-size:12px;color:var(--muted);padding:0 17px 16px;margin:0}
     footer{max-width:1280px;margin:auto;padding:8px 22px 30px;color:#667085;font-size:12px}
     .actions{display:flex;gap:9px}.field label em{font-style:normal;font-weight:500;color:var(--muted)}.hint{font-size:12px;color:var(--muted)}
-    .wholesale-note{font-size:12px;line-height:1.4;color:#725c14;margin:9px 0 0}.wholesale-note.over{color:var(--red2);font-weight:700}.wholesale-note.under{color:var(--green);font-weight:700}
+    .wholesale-note{font-size:12px;line-height:1.4;color:#725c14;margin:9px 0 0}
     @media print{header{border-bottom-width:2px}.actions{display:none}.results{position:static}.layout{grid-template-columns:1fr;gap:12px}.card{box-shadow:none;break-inside:avoid}details{display:none}body{background:#fff}}
     @media(max-width:900px){.layout{grid-template-columns:1fr}.results{position:static}.intro{align-items:start;flex-direction:column}.profit strong{font-size:34px}}
     @media(max-width:560px){main{padding:15px}.bar{padding:15px}.brand small{display:none}.grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.intro h2{font-size:24px}.content{padding:14px}.card-head{padding:13px 14px}.metric{align-items:flex-start}.profit{padding:18px}}
@@ -101,18 +101,16 @@
           <div class="metric"><span>Purchase + repairs / sq. ft.</span><b id="costSqft">$0</b></div>
         </div></section>
         <section class="card wholesale"><div class="card-head"><span class="dot"></span><h3>Wholesale Calculator</h3></div><div class="content">
-          <div class="field"><label for="maoRule">MAO rule</label><select id="maoRule"><option>75% rule</option><option>70% rule</option></select></div>
           <div class="field"><label for="assignmentFee">Desired assignment fee</label><div class="prefix"><input id="assignmentFee" type="number" min="0" step="1000" /></div></div>
           <div class="wholesale-result"><span>Maximum allowable offer</span><strong id="mao">$0</strong></div>
           <p class="wholesale-note" id="maoFormula"></p>
-          <p class="wholesale-note" id="maoVerdict"></p>
         </div></section>
       </aside>
     </div>
   </main>
   <footer>Estimates are for deal analysis only. Verify costs, financing terms, and resale assumptions before purchasing.</footer>
   <script>
-    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,maoRule:"75% rule",assignmentFee:15000};
+    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,assignmentFee:15000};
     const ids=Object.keys(defaults), $=id=>document.getElementById(id), n=id=>Number($(id).value)||0;
     const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
     const pct=new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:1});
@@ -143,15 +141,11 @@
       const downPayment=purchase+buying+firstPoints+secondPoints+miscPoints-loans;
       const capital=purchase+repairs+finance+holding+buying-loans;
       const cashReturn=safe(profit,capital)*12/months, annualRoi=totalRoi*12/months;
-      const maoPct=$('maoRule').value.indexOf('70')===0?.70:.75;
-      const mao=arv*maoPct-repairs-n('assignmentFee');
+      const mao=purchase+repairs-n('assignmentFee');
       const outputs={netProfit:money.format(profit),totalRoi:pct.format(totalRoi),dealRoi:pct.format(dealRoi),cashReturn:pct.format(cashReturn),annualRoi:pct.format(annualRoi),purchaseRepair:money.format(purchase+repairs),financeCost:money.format(finance),holdingCost:money.format(holding),buyingCost:money.format(buying),sellingCost:money.format(selling),downPayment:money.format(downPayment),capital:money.format(capital),costSqft:money.format(safe(purchase+repairs,sqft)),mao:money.format(mao)};
       Object.entries(outputs).forEach(([id,value])=>$(id).textContent=value);
       $('basisHint').textContent='Basis: '+money.format(basis)+(secondLoan+miscLoan?'':' — unused while 2nd/Other are 0%');
-      $('maoFormula').textContent=Math.round(maoPct*100)+'% × '+money.format(arv)+' ARV − '+money.format(repairs)+' repairs − '+money.format(n('assignmentFee'))+' fee';
-      const gap=mao-purchase, verdict=$('maoVerdict');
-      verdict.textContent=gap>=0?'Purchase price is '+money.format(gap)+' under MAO.':'Purchase price is '+money.format(-gap)+' OVER MAO — offer too high.';
-      verdict.className='wholesale-note '+(gap>=0?'under':'over');
+      $('maoFormula').textContent=money.format(purchase)+' purchase + '+money.format(repairs)+' repairs − '+money.format(n('assignmentFee'))+' fee';
       const d=new Date($('date').value+'T12:00:00');
       if(!isNaN(d)){d.setDate(d.getDate()+Math.round(months*30));$('saleDate').textContent='Assumes sale by '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
       else{$('saleDate').textContent='Set an evaluation date to project the sale date'}
