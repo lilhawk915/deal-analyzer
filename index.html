@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Deal Analyzer</title>
+  <meta name="description" content="Analyze flip costs, financing, profit, ROI, and wholesale offers." />
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    :root{--ink:#111827;--muted:#667085;--paper:#f4f6f8;--card:#fff;--line:#dfe4ea;--red:#d62f2f;--red2:#b92323;--green:#197a4a;--blue:#184f77;--gold:#f7c948;--radius:16px}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select,textarea{font:inherit} header{background:var(--ink);color:#fff;border-bottom:4px solid var(--red)}
+    .bar{max-width:1280px;margin:auto;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;border-radius:10px;background:var(--red);display:grid;place-items:center;font-weight:900;letter-spacing:-2px;font-size:21px}.brand h1{font-size:20px;line-height:1.1;margin:0}.brand small{color:#cbd5e1}.reset{border:1px solid #596273;background:transparent;color:#fff;border-radius:9px;padding:9px 13px;cursor:pointer}.reset:hover{background:#222c3b}
+    main{max-width:1280px;margin:auto;padding:22px}.intro{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:18px}.intro h2{font-size:28px;letter-spacing:-.5px;margin:0 0 3px}.intro p{margin:0;color:var(--muted)}
+    .layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,.75fr);gap:20px;align-items:start}.stack{display:grid;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 8px 24px rgba(17,24,39,.05);overflow:hidden}.card-head{padding:14px 17px;background:#f9fafb;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}.card-head h3{margin:0;font-size:16px}.dot{width:8px;height:8px;border-radius:50%;background:var(--red)}.content{padding:17px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 15px}.field{display:grid;gap:6px}.field.wide{grid-column:1/-1}.field label{font-size:13px;font-weight:700;color:#475467}.field input,.field select,.field textarea{width:100%;border:1px solid #cfd6df;border-radius:9px;background:#fff;color:var(--ink);padding:10px 11px;min-height:44px;outline:none}.field textarea{min-height:72px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(214,47,47,.12)}.prefix,.suffix{position:relative}.prefix input{padding-left:28px}.prefix:before{content:"$";position:absolute;left:11px;bottom:11px;color:#667085}.suffix input{padding-right:29px}.suffix:after{content:"%";position:absolute;right:11px;bottom:11px;color:#667085}
+    .results{position:sticky;top:18px}.profit{background:linear-gradient(135deg,var(--ink),#29384e);color:#fff;padding:20px}.profit .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#cbd5e1}.profit strong{display:block;font-size:38px;letter-spacing:-1.5px;margin:4px 0}.profit small{color:#cbd5e1}.profit.negative{background:linear-gradient(135deg,#7f1d1d,#b91c1c)}.profit.positive{background:linear-gradient(135deg,#115e3c,#168353)}
+    .metrics{padding:7px 18px 14px}.metric{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid #edf0f3}.metric:last-child{border:0}.metric span{font-size:13px;color:var(--muted)}.metric b{text-align:right}.metric.major b{color:var(--green);font-size:18px}.metric.warning b{color:var(--red)}
+    .wholesale{background:#fff8df;border-color:#f0d887}.wholesale .card-head{background:#fff3c7}.wholesale-result{display:flex;justify-content:space-between;align-items:end;gap:15px;padding-top:13px;margin-top:13px;border-top:1px solid #edd68b}.wholesale-result span{font-size:13px;color:#725c14}.wholesale-result strong{font-size:25px;color:#563f00}
+    details{border-top:1px solid var(--line)}summary{cursor:pointer;padding:14px 17px;font-weight:750;list-style:none}summary::-webkit-details-marker{display:none}summary:after{content:"+";float:right;color:var(--muted)}details[open] summary:after{content:"–"}.note{font-size:12px;color:var(--muted);padding:0 17px 16px;margin:0}
+    footer{max-width:1280px;margin:auto;padding:8px 22px 30px;color:#667085;font-size:12px}
+    .actions{display:flex;gap:9px}.field label em{font-style:normal;font-weight:500;color:var(--muted)}.hint{font-size:12px;color:var(--muted)}
+    .wholesale-note{font-size:12px;line-height:1.4;color:#725c14;margin:9px 0 0}.wholesale-note.over{color:var(--red2);font-weight:700}.wholesale-note.under{color:var(--green);font-weight:700}
+    @media print{header{border-bottom-width:2px}.actions{display:none}.results{position:static}.layout{grid-template-columns:1fr;gap:12px}.card{box-shadow:none;break-inside:avoid}details{display:none}body{background:#fff}}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.results{position:static}.intro{align-items:start;flex-direction:column}.profit strong{font-size:34px}}
+    @media(max-width:560px){main{padding:15px}.bar{padding:15px}.brand small{display:none}.grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.intro h2{font-size:24px}.content{padding:14px}.card-head{padding:13px 14px}.metric{align-items:flex-start}.profit{padding:18px}}
+  </style>
+</head>
+<body>
+  <header><div class="bar"><div class="brand"><div class="mark">DA</div><div><h1>Deal Analyzer</h1><small>Flip &amp; Wholesale Underwriting</small></div></div><div class="actions"><button class="reset" id="print" type="button">Print / PDF</button><button class="reset" id="reset" type="button">Reset defaults</button></div></div></header>
+  <main>
+    <div class="intro"><div><h2>Deal Analyzer</h2><p>Enter the deal details. Results update instantly.</p></div></div>
+    <div class="layout">
+      <div class="stack">
+        <section class="card"><div class="card-head"><span class="dot"></span><h3>Property & Pricing</h3></div><div class="content grid">
+          <div class="field wide"><label for="address">Property address</label><input id="address" autocomplete="street-address" /></div>
+          <div class="field"><label for="sqft">Total square footage</label><input id="sqft" type="number" min="0" step="1" /></div>
+          <div class="field"><label for="units">Number of units</label><input id="units" type="number" min="1" step="1" /></div>
+          <div class="field"><label for="evaluator">Evaluator name</label><input id="evaluator" /></div>
+          <div class="field"><label for="date">Evaluation date</label><input id="date" type="date" /></div>
+          <div class="field wide"><label for="description">Property description</label><textarea id="description"></textarea></div>
+          <div class="field"><label for="arv">After-repair value</label><div class="prefix"><input id="arv" type="number" min="0" step="1000" /></div></div>
+          <div class="field"><label for="repairs">Estimated repair costs</label><div class="prefix"><input id="repairs" type="number" min="0" step="500" /></div></div>
+          <div class="field"><label for="purchase">Purchase price</label><div class="prefix"><input id="purchase" type="number" min="0" step="1000" /></div></div>
+          <div class="field"><label for="holdMonths">Estimated hold time (months)</label><input id="holdMonths" type="number" min="0.1" step="0.5" /></div>
+        </div></section>
+
+        <section class="card"><div class="card-head"><span class="dot"></span><h3>Financing</h3></div><div class="content grid">
+          <div class="field wide"><label for="loanBasis">Second / Other loan % is based on <em>(does not affect the first mortgage)</em></label><select id="loanBasis"><option>ARV</option><option>Purchase+Rehab</option><option>Purchase Price</option></select><small class="hint" id="basisHint"></small></div>
+          <div class="field"><label for="firstLoan">First mortgage amount</label><div class="prefix"><input id="firstLoan" type="number" min="0" step="1000" /></div></div>
+          <div class="field"><label for="firstPoints">First mortgage points</label><div class="suffix"><input id="firstPoints" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="firstRate">First mortgage interest</label><div class="suffix"><input id="firstRate" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="secondPct">Second mortgage (% of basis)</label><div class="suffix"><input id="secondPct" type="number" min="0" step="1" /></div></div>
+          <div class="field"><label for="secondPoints">Second mortgage points</label><div class="suffix"><input id="secondPoints" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="secondRate">Second mortgage interest</label><div class="suffix"><input id="secondRate" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="miscPct">Other mortgage (% of basis)</label><div class="suffix"><input id="miscPct" type="number" min="0" step="1" /></div></div>
+          <div class="field"><label for="miscPoints">Other mortgage points</label><div class="suffix"><input id="miscPoints" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="miscRate">Other mortgage interest</label><div class="suffix"><input id="miscRate" type="number" min="0" step="0.25" /></div></div>
+          <div class="field wide"><label for="miscFinance">Miscellaneous financing costs</label><div class="prefix"><input id="miscFinance" type="number" min="0" step="100" /></div></div>
+        </div></section>
+
+        <section class="card"><div class="card-head"><span class="dot"></span><h3>Holding & Transaction Costs</h3></div><div class="content grid">
+          <div class="field"><label for="taxAnnual">Property taxes (annual)</label><div class="prefix"><input id="taxAnnual" type="number" min="0" step="100" /></div></div>
+          <div class="field"><label for="insurance">Insurance (monthly)</label><div class="prefix"><input id="insurance" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="hoa">HOA / condo fees (monthly)</label><div class="prefix"><input id="hoa" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="gas">Gas (monthly)</label><div class="prefix"><input id="gas" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="water">Water (monthly)</label><div class="prefix"><input id="water" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="electric">Electricity (monthly)</label><div class="prefix"><input id="electric" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="otherUtility">Other utilities (monthly)</label><div class="prefix"><input id="otherUtility" type="number" min="0" step="25" /></div></div>
+          <div class="field"><label for="miscHold">Other holding costs (monthly)</label><div class="prefix"><input id="miscHold" type="number" min="0" step="25" /></div></div>
+        </div>
+        <details><summary>Buying and selling cost assumptions</summary><div class="content grid">
+          <div class="field"><label for="buyAttorney">Buying escrow / attorney</label><div class="prefix"><input id="buyAttorney" type="number" min="0" /></div></div>
+          <div class="field"><label for="titlePct">Title insurance (% of purchase)</label><div class="suffix"><input id="titlePct" type="number" min="0" step="0.01" /></div></div>
+          <div class="field"><label for="titleBase">Title flat fee</label><div class="prefix"><input id="titleBase" type="number" min="0" step="50" /></div></div>
+          <div class="field"><label for="buyMisc">Miscellaneous buying costs</label><div class="prefix"><input id="buyMisc" type="number" min="0" /></div></div>
+          <div class="field"><label for="sellAttorney">Selling escrow / attorney</label><div class="prefix"><input id="sellAttorney" type="number" min="0" /></div></div>
+          <div class="field"><label for="recording">Selling recording fees</label><div class="prefix"><input id="recording" type="number" min="0" /></div></div>
+          <div class="field"><label for="realtorPct">Realtor fees (% of ARV)</label><div class="suffix"><input id="realtorPct" type="number" min="0" step="0.1" /></div></div>
+          <div class="field"><label for="transferPct">Transfer fees (% of ARV)</label><div class="suffix"><input id="transferPct" type="number" min="0" step="0.01" /></div></div>
+          <div class="field"><label for="warranty">Home warranty</label><div class="prefix"><input id="warranty" type="number" min="0" /></div></div>
+          <div class="field"><label for="staging">Staging costs</label><div class="prefix"><input id="staging" type="number" min="0" /></div></div>
+          <div class="field"><label for="catTax">CAT tax</label><div class="prefix"><input id="catTax" type="number" min="0" /></div></div>
+          <div class="field"><label for="sellMisc">Miscellaneous selling costs</label><div class="prefix"><input id="sellMisc" type="number" min="0" /></div></div>
+        </div></details></section>
+      </div>
+
+      <aside class="stack results">
+        <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Estimated net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small></div><div class="metrics">
+          <div class="metric major"><span>Total cost ROI</span><b id="totalRoi">0%</b></div>
+          <div class="metric"><span>Purchase + rehab ROI</span><b id="dealRoi">0%</b></div>
+          <div class="metric"><span>Annualized cash-on-cash return</span><b id="cashReturn">0%</b></div>
+          <div class="metric"><span>Total annualized ROI</span><b id="annualRoi">0%</b></div>
+          <div class="metric"><span>Purchase + repairs</span><b id="purchaseRepair">$0</b></div>
+          <div class="metric"><span>Financing costs</span><b id="financeCost">$0</b></div>
+          <div class="metric"><span>Holding costs</span><b id="holdingCost">$0</b></div>
+          <div class="metric"><span>Buying costs</span><b id="buyingCost">$0</b></div>
+          <div class="metric"><span>Selling costs</span><b id="sellingCost">$0</b></div>
+          <div class="metric"><span>Down payment at closing</span><b id="downPayment">$0</b></div>
+          <div class="metric"><span>Committed capital (cash in, net of loans)</span><b id="capital">$0</b></div>
+          <div class="metric"><span>Purchase + repairs / sq. ft.</span><b id="costSqft">$0</b></div>
+        </div></section>
+        <section class="card wholesale"><div class="card-head"><span class="dot"></span><h3>Wholesale Calculator</h3></div><div class="content">
+          <div class="field"><label for="maoRule">MAO rule</label><select id="maoRule"><option>75% rule</option><option>70% rule</option></select></div>
+          <div class="field"><label for="assignmentFee">Desired assignment fee</label><div class="prefix"><input id="assignmentFee" type="number" min="0" step="1000" /></div></div>
+          <div class="wholesale-result"><span>Maximum allowable offer</span><strong id="mao">$0</strong></div>
+          <p class="wholesale-note" id="maoFormula"></p>
+          <p class="wholesale-note" id="maoVerdict"></p>
+        </div></section>
+      </aside>
+    </div>
+  </main>
+  <footer>Estimates are for deal analysis only. Verify costs, financing terms, and resale assumptions before purchasing.</footer>
+  <script>
+    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,maoRule:"75% rule",assignmentFee:15000};
+    const ids=Object.keys(defaults), $=id=>document.getElementById(id), n=id=>Number($(id).value)||0;
+    const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+    const pct=new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:1});
+    const STORE='deal-analyzer-v1';
+    function save(){try{localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(ids.map(id=>[id,$(id).value]))))}catch(e){}}
+    function restore(){try{const raw=localStorage.getItem(STORE);if(!raw)return false;const saved=JSON.parse(raw);ids.forEach(id=>{if(saved[id]!==undefined)$(id).value=saved[id]});return true}catch(e){return false}}
+    function applyDefaults(){ids.forEach(id=>{$(id).value=defaults[id]})}
+    function setDefaults(){try{localStorage.removeItem(STORE)}catch(e){}applyDefaults();calculate()}
+    function safe(a,b){return b?a/b:0}
+    function calculate(){
+      const arv=n('arv'), repairs=n('repairs'), purchase=n('purchase'), months=Math.max(n('holdMonths'),.1), sqft=n('sqft');
+      const basis=$('loanBasis').value==='ARV'?arv:$('loanBasis').value==='Purchase+Rehab'?purchase+repairs:purchase;
+      const firstLoan=n('firstLoan'), secondLoan=basis*n('secondPct')/100, miscLoan=basis*n('miscPct')/100;
+      const firstPoints=n('firstPoints')/100*firstLoan, firstInterest=firstLoan*(n('firstRate')/100)/12*months;
+      const secondPoints=n('secondPoints')/100*secondLoan, secondInterest=secondLoan*(n('secondRate')/100)/12*months;
+      const miscPoints=n('miscPoints')/100*miscLoan, miscInterest=miscLoan*(n('miscRate')/100)/12*months;
+      const finance=firstPoints+firstInterest+secondPoints+secondInterest+miscPoints+miscInterest+n('miscFinance');
+      const utilities=n('gas')+n('water')+n('electric')+n('otherUtility');
+      const monthlyHold=n('taxAnnual')/12+n('hoa')+n('insurance')+utilities+n('miscHold');
+      const holding=monthlyHold*months;
+      const title=n('titlePct')/100*purchase+n('titleBase');
+      const buying=n('buyAttorney')+title+n('buyMisc');
+      const selling=n('sellAttorney')+n('recording')+n('realtorPct')/100*arv+n('transferPct')/100*arv+n('warranty')+n('staging')+n('catTax')+n('sellMisc');
+      const profit=arv-purchase-repairs-finance-holding-buying-selling;
+      const totalRoi=safe(profit,purchase+repairs+finance+holding+buying+selling);
+      const dealRoi=safe(profit,purchase+repairs);
+      const loans=firstLoan+secondLoan+miscLoan;
+      const downPayment=purchase+buying+firstPoints+secondPoints+miscPoints-loans;
+      const capital=purchase+repairs+finance+holding+buying-loans;
+      const cashReturn=safe(profit,capital)*12/months, annualRoi=totalRoi*12/months;
+      const maoPct=$('maoRule').value.indexOf('70')===0?.70:.75;
+      const mao=arv*maoPct-repairs-n('assignmentFee');
+      const outputs={netProfit:money.format(profit),totalRoi:pct.format(totalRoi),dealRoi:pct.format(dealRoi),cashReturn:pct.format(cashReturn),annualRoi:pct.format(annualRoi),purchaseRepair:money.format(purchase+repairs),financeCost:money.format(finance),holdingCost:money.format(holding),buyingCost:money.format(buying),sellingCost:money.format(selling),downPayment:money.format(downPayment),capital:money.format(capital),costSqft:money.format(safe(purchase+repairs,sqft)),mao:money.format(mao)};
+      Object.entries(outputs).forEach(([id,value])=>$(id).textContent=value);
+      $('basisHint').textContent='Basis: '+money.format(basis)+(secondLoan+miscLoan?'':' — unused while 2nd/Other are 0%');
+      $('maoFormula').textContent=Math.round(maoPct*100)+'% × '+money.format(arv)+' ARV − '+money.format(repairs)+' repairs − '+money.format(n('assignmentFee'))+' fee';
+      const gap=mao-purchase, verdict=$('maoVerdict');
+      verdict.textContent=gap>=0?'Purchase price is '+money.format(gap)+' under MAO.':'Purchase price is '+money.format(-gap)+' OVER MAO — offer too high.';
+      verdict.className='wholesale-note '+(gap>=0?'under':'over');
+      const d=new Date($('date').value+'T12:00:00');
+      if(!isNaN(d)){d.setDate(d.getDate()+Math.round(months*30));$('saleDate').textContent='Assumes sale by '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+      else{$('saleDate').textContent='Set an evaluation date to project the sale date'}
+      $('profitPanel').className='profit '+(profit>=0?'positive':'negative');
+      save();
+    }
+    ids.forEach(id=>$(id).addEventListener('input',calculate));
+    $('reset').addEventListener('click',setDefaults);
+    $('print').addEventListener('click',()=>window.print());
+    if(!restore())applyDefaults();
+    calculate();
+  </script>
+</body>
+</html>
