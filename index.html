@@ -21,6 +21,12 @@
     footer{max-width:1280px;margin:auto;padding:8px 22px 30px;color:#667085;font-size:12px}
     .actions{display:flex;gap:9px}.field label em{font-style:normal;font-weight:500;color:var(--muted)}.hint{font-size:12px;color:var(--muted)}
     .wholesale-note{font-size:12px;line-height:1.4;color:#725c14;margin:9px 0 0}
+    .profit.warn{background:linear-gradient(135deg,#78350f,#b45309)}
+    .target-gap{margin-top:9px;font-size:13px;font-weight:750;padding:5px 10px;border-radius:999px;display:inline-block;background:rgba(255,255,255,.16)}
+    .target{padding:15px 18px;border-bottom:1px solid var(--line);background:#f9fafb}
+    .target-result{display:flex;justify-content:space-between;align-items:end;gap:15px;padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}
+    .target-result span{font-size:13px;color:var(--muted)}.target-result strong{font-size:23px;letter-spacing:-.5px;color:var(--blue)}
+    .target-note{font-size:12px;line-height:1.4;color:var(--muted);margin:8px 0 0}
     @media print{header{border-bottom-width:2px}.actions{display:none}.results{position:static}.layout{grid-template-columns:1fr;gap:12px}.card{box-shadow:none;break-inside:avoid}details{display:none}body{background:#fff}}
     @media(max-width:900px){.layout{grid-template-columns:1fr}.results{position:static}.intro{align-items:start;flex-direction:column}.profit strong{font-size:34px}}
     @media(max-width:560px){main{padding:15px}.bar{padding:15px}.brand small{display:none}.grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.intro h2{font-size:24px}.content{padding:14px}.card-head{padding:13px 14px}.metric{align-items:flex-start}.profit{padding:18px}}
@@ -86,7 +92,10 @@
       </div>
 
       <aside class="stack results">
-        <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Estimated net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small></div><div class="metrics">
+        <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Estimated net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small><div class="target-gap" id="targetGap"></div></div>
+        <div class="target"><div class="field"><label for="targetProfit">Target net profit</label><div class="prefix"><input id="targetProfit" type="number" min="0" step="1000" /></div></div>
+          <div class="target-result"><span>Max purchase price to hit target</span><strong id="maxPurchase">$0</strong></div>
+          <p class="target-note" id="maxPurchaseNote"></p></div><div class="metrics">
           <div class="metric major"><span>Total cost ROI</span><b id="totalRoi">0%</b></div>
           <div class="metric"><span>Purchase + rehab ROI</span><b id="dealRoi">0%</b></div>
           <div class="metric"><span>Annualized cash-on-cash return</span><b id="cashReturn">0%</b></div>
@@ -110,7 +119,7 @@
   </main>
   <footer>Estimates are for deal analysis only. Verify costs, financing terms, and resale assumptions before purchasing.</footer>
   <script>
-    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,assignmentFee:15000};
+    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,targetProfit:30000,assignmentFee:15000};
     const ids=Object.keys(defaults), $=id=>document.getElementById(id), n=id=>Number($(id).value)||0;
     const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
     const pct=new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:1});
@@ -120,8 +129,10 @@
     function applyDefaults(){ids.forEach(id=>{$(id).value=defaults[id]})}
     function setDefaults(){try{localStorage.removeItem(STORE)}catch(e){}applyDefaults();calculate()}
     function safe(a,b){return b?a/b:0}
-    function calculate(){
-      const arv=n('arv'), repairs=n('repairs'), purchase=n('purchase'), months=Math.max(n('holdMonths'),.1), sqft=n('sqft');
+    // Full deal math. Pass a purchase price to price a hypothetical; omit it to use the form.
+    function model(purchaseOverride){
+      const arv=n('arv'), repairs=n('repairs'), months=Math.max(n('holdMonths'),.1), sqft=n('sqft');
+      const purchase=purchaseOverride===undefined?n('purchase'):purchaseOverride;
       const basis=$('loanBasis').value==='ARV'?arv:$('loanBasis').value==='Purchase+Rehab'?purchase+repairs:purchase;
       const firstLoan=n('firstLoan'), secondLoan=basis*n('secondPct')/100, miscLoan=basis*n('miscPct')/100;
       const firstPoints=n('firstPoints')/100*firstLoan, firstInterest=firstLoan*(n('firstRate')/100)/12*months;
@@ -142,6 +153,17 @@
       const capital=purchase+repairs+firstPoints+secondPoints+miscPoints+holding+buying+n('staging')+n('catTax')+n('sellMisc')-loans;
       const cashReturn=safe(profit,capital)*12/months, annualRoi=totalRoi*12/months;
       const mao=purchase+repairs-n('assignmentFee');
+      return {arv,repairs,purchase,months,sqft,finance,holding,buying,selling,profit,totalRoi,dealRoi,downPayment,capital,cashReturn,annualRoi,mao,basis,secondLoan,miscLoan};
+    }
+    // Net profit is linear in purchase price, so two probes solve it exactly.
+    function purchaseForTarget(target){
+      const a=model(0).profit, b=model(100000).profit, slope=(b-a)/100000;
+      if(!(slope<0))return null;
+      return (target-a)/slope;
+    }
+    function calculate(){
+      const m=model();
+      const {arv,repairs,purchase,months,sqft,finance,holding,buying,selling,profit,totalRoi,dealRoi,downPayment,capital,cashReturn,annualRoi,mao,basis,secondLoan,miscLoan}=m;
       const outputs={netProfit:money.format(profit),totalRoi:pct.format(totalRoi),dealRoi:pct.format(dealRoi),cashReturn:pct.format(cashReturn),annualRoi:pct.format(annualRoi),purchaseRepair:money.format(purchase+repairs),financeCost:money.format(finance),holdingCost:money.format(holding),buyingCost:money.format(buying),sellingCost:money.format(selling),downPayment:money.format(downPayment),capital:money.format(capital),costSqft:money.format(safe(purchase+repairs,sqft)),mao:money.format(mao)};
       Object.entries(outputs).forEach(([id,value])=>$(id).textContent=value);
       $('basisHint').textContent='Basis: '+money.format(basis)+(secondLoan+miscLoan?'':' — unused while 2nd/Other are 0%');
@@ -149,7 +171,20 @@
       const d=new Date($('date').value+'T12:00:00');
       if(!isNaN(d)){d.setDate(d.getDate()+Math.round(months*30));$('saleDate').textContent='Assumes sale by '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
       else{$('saleDate').textContent='Set an evaluation date to project the sale date'}
-      $('profitPanel').className='profit '+(profit>=0?'positive':'negative');
+      // Target test: are we clearing the underwriting hurdle, and what could we pay if not?
+      // Displayed dollars are whole, so treat anything inside half a dollar as on target.
+      const target=n('targetProfit'), gap=profit-target, hit=gap>=-.5, maxBuy=purchaseForTarget(target);
+      $('targetGap').textContent=Math.abs(gap)<.5
+        ? 'Exactly at the '+money.format(target)+' target'
+        : gap>0 ? money.format(gap)+' above the '+money.format(target)+' target'
+                : money.format(-gap)+' short of the '+money.format(target)+' target';
+      $('targetGap').className='target-gap '+(hit?'ok':'short');
+      $('maxPurchase').textContent=maxBuy===null?'—':maxBuy<0?'Not achievable':money.format(maxBuy);
+      $('maxPurchaseNote').textContent=maxBuy===null?'Adjust inputs to solve for a purchase price.'
+        :maxBuy<0?'This deal cannot reach '+money.format(target)+' at any purchase price. ARV, repairs, or costs have to move.'
+        :(maxBuy>=purchase?'You have '+money.format(maxBuy-purchase)+' of room above your current offer.'
+                          :'Your offer is '+money.format(purchase-maxBuy)+' too high to hit the target.');
+      $('profitPanel').className='profit '+(hit?'positive':profit>=0?'warn':'negative');
       save();
     }
     ids.forEach(id=>$(id).addEventListener('input',calculate));
