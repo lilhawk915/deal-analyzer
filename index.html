@@ -54,7 +54,7 @@
         <section class="card"><div class="card-head"><span class="dot"></span><h3>Financing</h3></div><div class="content grid">
           <div class="field wide"><label for="loanBasis">Second / Other loan % is based on <em>(does not affect the first mortgage)</em></label><select id="loanBasis"><option>ARV</option><option>Purchase+Rehab</option><option>Purchase Price</option></select><small class="hint" id="basisHint"></small></div>
           <div class="field"><label for="firstLoan">First mortgage amount</label><div class="prefix"><input id="firstLoan" type="number" min="0" step="1000" /></div></div>
-          <div class="field"><label for="firstPoints">First mortgage points</label><div class="suffix"><input id="firstPoints" type="number" min="0" step="0.25" /></div></div>
+          <div class="field"><label for="firstPoints">First mortgage points</label><div class="prefix"><input id="firstPoints" type="number" min="0" step="100" /></div></div>
           <div class="field"><label for="firstRate">First mortgage interest</label><div class="suffix"><input id="firstRate" type="number" min="0" step="0.25" /></div></div>
           <div class="field"><label for="secondPct">Second mortgage (% of basis)</label><div class="suffix"><input id="secondPct" type="number" min="0" step="1" /></div></div>
           <div class="field"><label for="secondPoints">Second mortgage points</label><div class="suffix"><input id="secondPoints" type="number" min="0" step="0.25" /></div></div>
@@ -119,7 +119,7 @@
   </main>
   <footer>Estimates are for deal analysis only. Verify costs, financing terms, and resale assumptions before purchasing.</footer>
   <script>
-    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,targetProfit:30000,assignmentFee:15000};
+    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4000,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,targetProfit:30000,assignmentFee:15000};
     const ids=Object.keys(defaults), $=id=>document.getElementById(id), n=id=>Number($(id).value)||0;
     const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
     const pct=new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:1});
@@ -135,7 +135,7 @@
       const purchase=purchaseOverride===undefined?n('purchase'):purchaseOverride;
       const basis=$('loanBasis').value==='ARV'?arv:$('loanBasis').value==='Purchase+Rehab'?purchase+repairs:purchase;
       const firstLoan=n('firstLoan'), secondLoan=basis*n('secondPct')/100, miscLoan=basis*n('miscPct')/100;
-      const firstPoints=n('firstPoints')/100*firstLoan, firstInterest=firstLoan*(n('firstRate')/100)/12*months;
+      const firstPoints=n('firstPoints'), firstInterest=firstLoan*(n('firstRate')/100)/12*months;
       const secondPoints=n('secondPoints')/100*secondLoan, secondInterest=secondLoan*(n('secondRate')/100)/12*months;
       const miscPoints=n('miscPoints')/100*miscLoan, miscInterest=miscLoan*(n('miscRate')/100)/12*months;
       const finance=firstPoints+firstInterest+secondPoints+secondInterest+miscPoints+miscInterest+n('miscFinance');
