@@ -35,7 +35,7 @@
 <body>
   <header><div class="bar"><div class="brand"><div class="mark">DA</div><div><h1>Deal Analyzer</h1><small>Flip &amp; Wholesale Underwriting</small></div></div><div class="actions"><button class="reset" id="print" type="button">Print / PDF</button><button class="reset" id="reset" type="button">Reset defaults</button></div></div></header>
   <main>
-    <div class="intro"><div><h2>Deal Analyzer</h2><p>Enter the deal details. Results update instantly.</p></div></div>
+    <div class="intro"><div><h2>Deal Analyzer</h2><p>Underwritten from the flipper's seat. Results update instantly.</p></div></div>
     <div class="layout">
       <div class="stack">
         <section class="card"><div class="card-head"><span class="dot"></span><h3>Property & Pricing</h3></div><div class="content grid">
@@ -47,7 +47,7 @@
           <div class="field wide"><label for="description">Property description</label><textarea id="description"></textarea></div>
           <div class="field"><label for="arv">After-repair value</label><div class="prefix"><input id="arv" type="number" min="0" step="1000" /></div></div>
           <div class="field"><label for="repairs">Estimated repair costs</label><div class="prefix"><input id="repairs" type="number" min="0" step="500" /></div></div>
-          <div class="field"><label for="purchase">Purchase price</label><div class="prefix"><input id="purchase" type="number" min="0" step="1000" /></div></div>
+          <div class="field"><label for="purchase">Purchase price <em>(what the flipper pays you)</em></label><div class="prefix"><input id="purchase" type="number" min="0" step="1000" /></div></div>
           <div class="field"><label for="holdMonths">Estimated hold time (months)</label><input id="holdMonths" type="number" min="0.1" step="0.5" /></div>
         </div></section>
 
@@ -92,9 +92,9 @@
       </div>
 
       <aside class="stack results">
-        <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Estimated net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small><div class="target-gap" id="targetGap"></div></div>
-        <div class="target"><div class="field"><label for="targetProfit">Target net profit</label><div class="prefix"><input id="targetProfit" type="number" min="0" step="1000" /></div></div>
-          <div class="target-result"><span>Max purchase price to hit target</span><strong id="maxPurchase">$0</strong></div>
+        <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Flipper's net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small><div class="target-gap" id="targetGap"></div></div>
+        <div class="target"><div class="field"><label for="targetProfit">Target flipper profit</label><div class="prefix"><input id="targetProfit" type="number" min="0" step="1000" /></div></div>
+          <div class="target-result"><span>Max the flipper can pay and still hit target</span><strong id="maxPurchase">$0</strong></div>
           <p class="target-note" id="maxPurchaseNote"></p></div><div class="metrics">
           <div class="metric major"><span>Total cost ROI</span><b id="totalRoi">0%</b></div>
           <div class="metric"><span>Purchase + rehab ROI</span><b id="dealRoi">0%</b></div>
@@ -110,8 +110,8 @@
           <div class="metric"><span>Purchase + repairs / sq. ft.</span><b id="costSqft">$0</b></div>
         </div></section>
         <section class="card wholesale"><div class="card-head"><span class="dot"></span><h3>Wholesale Calculator</h3></div><div class="content">
-          <div class="field"><label for="assignmentFee">Desired assignment fee</label><div class="prefix"><input id="assignmentFee" type="number" min="0" step="1000" /></div></div>
-          <div class="wholesale-result"><span>Maximum allowable offer</span><strong id="mao">$0</strong></div>
+          <div class="field"><label for="assignmentFee">Your assignment fee</label><div class="prefix"><input id="assignmentFee" type="number" min="0" step="1000" /></div></div>
+          <div class="wholesale-result"><span>Max offer to the seller (MAO)</span><strong id="mao">$0</strong></div>
           <p class="wholesale-note" id="maoFormula"></p>
         </div></section>
       </aside>
@@ -152,7 +152,7 @@
       const downPayment=purchase+buying+firstPoints+secondPoints+miscPoints-loans;
       const capital=purchase+repairs+firstPoints+secondPoints+miscPoints+holding+buying+n('staging')+n('catTax')+n('sellMisc')-loans;
       const cashReturn=safe(profit,capital)*12/months, annualRoi=totalRoi*12/months;
-      const mao=purchase+repairs-n('assignmentFee');
+      const mao=purchase-n('assignmentFee');
       return {arv,repairs,purchase,months,sqft,finance,holding,buying,selling,profit,totalRoi,dealRoi,downPayment,capital,cashReturn,annualRoi,mao,basis,secondLoan,miscLoan};
     }
     // Net profit is linear in purchase price, so two probes solve it exactly.
@@ -167,7 +167,7 @@
       const outputs={netProfit:money.format(profit),totalRoi:pct.format(totalRoi),dealRoi:pct.format(dealRoi),cashReturn:pct.format(cashReturn),annualRoi:pct.format(annualRoi),purchaseRepair:money.format(purchase+repairs),financeCost:money.format(finance),holdingCost:money.format(holding),buyingCost:money.format(buying),sellingCost:money.format(selling),downPayment:money.format(downPayment),capital:money.format(capital),costSqft:money.format(safe(purchase+repairs,sqft)),mao:money.format(mao)};
       Object.entries(outputs).forEach(([id,value])=>$(id).textContent=value);
       $('basisHint').textContent='Basis: '+money.format(basis)+(secondLoan+miscLoan?'':' — unused while 2nd/Other are 0%');
-      $('maoFormula').textContent=money.format(purchase)+' purchase + '+money.format(repairs)+' repairs − '+money.format(n('assignmentFee'))+' fee';
+      $('maoFormula').textContent=money.format(purchase)+' flipper pays you − '+money.format(n('assignmentFee'))+' your fee. This is your ceiling on the seller offer.';
       const d=new Date($('date').value+'T12:00:00');
       if(!isNaN(d)){d.setDate(d.getDate()+Math.round(months*30));$('saleDate').textContent='Assumes sale by '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
       else{$('saleDate').textContent='Set an evaluation date to project the sale date'}
