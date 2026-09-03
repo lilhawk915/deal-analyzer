@@ -27,6 +27,7 @@
     .target-result{display:flex;justify-content:space-between;align-items:end;gap:15px;padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}
     .target-result span{font-size:13px;color:var(--muted)}.target-result strong{font-size:23px;letter-spacing:-.5px;color:var(--blue)}
     .target-note{font-size:12px;line-height:1.4;color:var(--muted);margin:8px 0 0}
+    .target-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.target-gap.near{background:rgba(255,255,255,.22)}
     @media print{header{border-bottom-width:2px}.actions{display:none}.results{position:static}.layout{grid-template-columns:1fr;gap:12px}.card{box-shadow:none;break-inside:avoid}details{display:none}body{background:#fff}}
     @media(max-width:900px){.layout{grid-template-columns:1fr}.results{position:static}.intro{align-items:start;flex-direction:column}.profit strong{font-size:34px}}
     @media(max-width:560px){main{padding:15px}.bar{padding:15px}.brand small{display:none}.grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.intro h2{font-size:24px}.content{padding:14px}.card-head{padding:13px 14px}.metric{align-items:flex-start}.profit{padding:18px}}
@@ -93,7 +94,8 @@
 
       <aside class="stack results">
         <section class="card"><div class="profit" id="profitPanel"><div class="eyebrow">Flipper's net profit</div><strong id="netProfit">$0</strong><small id="saleDate">Sale by —</small><div class="target-gap" id="targetGap"></div></div>
-        <div class="target"><div class="field"><label for="targetProfit">Target flipper profit</label><div class="prefix"><input id="targetProfit" type="number" min="0" step="1000" /></div></div>
+        <div class="target"><div class="target-fields"><div class="field"><label for="targetProfit">Target flipper profit</label><div class="prefix"><input id="targetProfit" type="number" min="0" step="1000" /></div></div>
+          <div class="field"><label for="tolerancePct">Close-enough range</label><div class="suffix"><input id="tolerancePct" type="number" min="0" step="1" /></div></div></div>
           <div class="target-result"><span>Max the flipper can pay and still hit target</span><strong id="maxPurchase">$0</strong></div>
           <p class="target-note" id="maxPurchaseNote"></p></div><div class="metrics">
           <div class="metric major"><span>Total cost ROI</span><b id="totalRoi">0%</b></div>
@@ -119,7 +121,7 @@
   </main>
   <footer>Estimates are for deal analysis only. Verify costs, financing terms, and resale assumptions before purchasing.</footer>
   <script>
-    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4000,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,targetProfit:30000,assignmentFee:15000};
+    const defaults={address:"",sqft:2248,units:1,evaluator:"",date:"",description:"",arv:245000,repairs:19000,purchase:170000,holdMonths:3,loanBasis:"ARV",firstLoan:139000,firstPoints:4000,firstRate:12,secondPct:0,secondPoints:0,secondRate:0,miscPct:0,miscPoints:0,miscRate:0,miscFinance:0,taxAnnual:5000,insurance:225,hoa:0,gas:75,water:75,electric:50,otherUtility:0,miscHold:0,buyAttorney:900,titlePct:.45,titleBase:500,buyMisc:0,sellAttorney:900,recording:400,realtorPct:4,transferPct:.12,warranty:750,staging:1200,catTax:0,sellMisc:0,targetProfit:30000,tolerancePct:5,assignmentFee:15000};
     const ids=Object.keys(defaults), $=id=>document.getElementById(id), n=id=>Number($(id).value)||0;
     const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
     const pct=new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:1});
@@ -172,18 +174,22 @@
       if(!isNaN(d)){d.setDate(d.getDate()+Math.round(months*30));$('saleDate').textContent='Assumes sale by '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
       else{$('saleDate').textContent='Set an evaluation date to project the sale date'}
       // Target test: are we clearing the underwriting hurdle, and what could we pay if not?
-      // Displayed dollars are whole, so treat anything inside half a dollar as on target.
-      const target=n('targetProfit'), gap=profit-target, hit=gap>=-.5, maxBuy=purchaseForTarget(target);
+      // A near miss still counts. Anything within the close-enough range reads as a pass.
+      const target=n('targetProfit'), tol=target*n('tolerancePct')/100, gap=profit-target;
+      const clears=gap>=-.5, hit=gap>=-(tol+.5), maxBuy=purchaseForTarget(target);
+      const floor=purchaseForTarget(target-tol);
       $('targetGap').textContent=Math.abs(gap)<.5
         ? 'Exactly at the '+money.format(target)+' target'
         : gap>0 ? money.format(gap)+' above the '+money.format(target)+' target'
-                : money.format(-gap)+' short of the '+money.format(target)+' target';
-      $('targetGap').className='target-gap '+(hit?'ok':'short');
+        : hit ? money.format(-gap)+' under '+money.format(target)+' — close enough'
+              : money.format(-gap)+' short of the '+money.format(target)+' target';
+      $('targetGap').className='target-gap '+(clears?'ok':hit?'near':'short');
       $('maxPurchase').textContent=maxBuy===null?'—':maxBuy<0?'Not achievable':money.format(maxBuy);
       $('maxPurchaseNote').textContent=maxBuy===null?'Adjust inputs to solve for a purchase price.'
         :maxBuy<0?'This deal cannot reach '+money.format(target)+' at any purchase price. ARV, repairs, or costs have to move.'
-        :(maxBuy>=purchase?'You have '+money.format(maxBuy-purchase)+' of room above your current offer.'
-                          :'Your offer is '+money.format(purchase-maxBuy)+' too high to hit the target.');
+        :(tol>0&&floor!==null&&floor>0?'Stretch to '+money.format(floor)+' and the flipper still clears '+money.format(target-tol)+', inside your close-enough range. ':'')
+         +(maxBuy>=purchase?'You have '+money.format(maxBuy-purchase)+' of room above your current offer.'
+                           :'Your offer is '+money.format(purchase-maxBuy)+' above the clean-target price.');
       $('profitPanel').className='profit '+(hit?'positive':profit>=0?'warn':'negative');
       save();
     }
